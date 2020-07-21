@@ -1,10 +1,9 @@
 import * as functions from 'firebase-functions';
 import * as firebase from 'firebase-admin';
-import { FirestoreSimple } from '@firestore-simple/admin'
 import { Product } from './interface';
-import { SlackLogger } from './slack-logger';
 import { Seven } from './seven';
 import { ProductApi } from './api/product_api';
+import { ProductService } from './service/product_service';
 
 firebase.initializeApp();
 const firestore = firebase.firestore();
@@ -12,33 +11,24 @@ const firestore = firebase.firestore();
 export const product = functions
   .region('asia-northeast1')
   .https.onRequest(async (req, res) => {
-    if(req.method !== 'POST') {
-        res.status(405).send('Method Not Allowed.');
-        return;
+    switch(req.method) {
+      case 'POST':
+        return ProductService.create(firestore, req.body as Product)? res.send(201) : res.send(400);
+      default:
+        return res.status(405).send('Method not allowed.');
     }
-    const p: Product = req.body;
-    if(!p.id) {
-        console.log(`Product is invalid: ${JSON.stringify(p)}`);
-        return;
-    }
+  });
 
-    const store = new FirestoreSimple(firestore);
-    const products = store.collection<Product>({ path: 'products' });
-    try {
-      const id = await products.set({
-        id: p.id,
-        name: p.name,
-        price: p.price ?? -1,
-        releasedAt: new Date(p.releasedAt),
-        regions: p.regions ?? [],
-        url: p.url ?? ''
-      });
-      SlackLogger.send(`*${p.name}* is created. id=${id}`);
-    } catch(err) {
-      SlackLogger.send(err);
+export const products = functions
+  .region('asia-northeast1')
+  .https.onRequest(async (req, res) => {
+    switch(req.method) {
+      case 'POST':
+        return ProductService.createTransaction(firestore, req.body as Product[])? res.send(201) : res.send(400);
+      default:
+        return res.status(405).send('Method not allowed.');
     }
-    return res.send(200);
-});
+  });
 
 export const crowlSeven = functions
     .region('asia-northeast1')
@@ -47,4 +37,14 @@ export const crowlSeven = functions
     .onRun(async context => {
       const products = await Seven.fetchProducts();
       products.map(p => ProductApi.create(p));
+      return;
     });
+
+// // test: crowlSeven
+// export const crowlSevenTest = functions
+//   .region('asia-northeast1')
+//   .https.onRequest(async (req, res) => {
+//       const products = await Seven.fetchProducts();
+//       products.map(p => ProductApi.create(p));
+//       return res.send(200);
+//   });

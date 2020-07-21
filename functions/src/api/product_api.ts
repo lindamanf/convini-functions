@@ -1,20 +1,18 @@
 import { Product } from '../interface';
 import { URI_CF_TOKYO } from '../const';
-import * as request from 'request';
-import { SlackLogger } from '../slack-logger';
+import { BaseApi } from './base_api';
 
-class ProductApiClass {
+class ProductApiClass extends BaseApi {
   public create(product: Product) {
-    const options = {
-      url: `${URI_CF_TOKYO}/product`,
-      headers: { 'Content-type': 'application/json' },
-      form: product
+    this.post(`${URI_CF_TOKYO}/product`, {
+      ...product,
+    });
   }
-  request.post(options, (err) => {
-      if(err) {
-        SlackLogger.send(err);
-      }
-  }); 
+  public createTrunsaction(products: Product[]) {
+    this.post(`${URI_CF_TOKYO}/products`, {
+      ...products,
+    });
   }
 }
+
 export const ProductApi = new ProductApiClass();

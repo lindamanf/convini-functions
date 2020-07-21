@@ -53,6 +53,7 @@ class SevenClass {
   }
 
   public async fetchProducts() {
+    SlackLogger.send('Start seven crowler.');
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
     await page.goto(this.url);
@@ -74,7 +75,8 @@ class SevenClass {
         });
     }));
     await browser.close();
-
+    SlackLogger.send('End seven crowler.');
+    SlackLogger.send(JSON.stringify(products));
     return products;
   }
 }
