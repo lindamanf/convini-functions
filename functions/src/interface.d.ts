@@ -1,8 +1,10 @@
 export interface Product {
   id: string,
   name: string,
-  url: string,
-  price: number,
+  brand: 'seven' | 'lawson' | 'famima',
+  url: string | null,
+  price: number | null,
   regions: string[],
-  releasedAt: Date,
+  releasedAt: Date | null,
+  image: 'string' | null,
 }
